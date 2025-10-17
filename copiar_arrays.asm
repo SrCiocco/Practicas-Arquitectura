@@ -8,20 +8,17 @@
 	contador: .word 5 # Las veces que se va a repetir el bucle.
 	i: .word 0 # Indice para definir donde va a arrancar el bucle.
 .text
-	main: la $t0, array_A # Puntero a Array_A.
-	      la $t1, array_B # Puntero a Array_B.
+	main: lw $t0, contador # Guardamos el valor del contador en $t2.
+	      lw $t1, i # Guardamos el valor del indice en $t3.
 	      
-	      lw $t2, contador # Guardamos el valor del contador en $t2.
-	      lw $t3, i # Guardamos el valor del indice en $t3.
-	      
-	loop_externo: beqz $t2, end # Si contador es igual a 0 entonces fin.
-	              sub $t2, $t2, 1 # Sino, contador--
+	loop_externo: beqz $t0, end # Si contador es igual a 0 entonces fin.
+	              sub $t0, $t0, 1 # Sino, contador--
 	              
 	
-	loop_interno: lw $t4, array_A($t3)# tmp = Array_A[i]
-		      sw $t4, array_B($t3) # Array_B[i] = tmp
+	loop_interno: lw $t2, array_A($t1)# tmp = Array_A[i]
+		      sw $t2, array_B($t1) # Array_B[i] = tmp
 		      
-	incrementar_indice: add $t3, $t3, 4 # i += 4
+	incrementar_indice: add $t1, $t1, 4 # i += 4
 		            j loop_externo
 		            
 	end: li $v0, 17 # Le mandamos la señal al sistema operativo para salir del programa con un
