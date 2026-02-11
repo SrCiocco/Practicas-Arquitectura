@@ -1,4 +1,5 @@
-# Una función que multiplica (corriendo bits) x por una potencia de 2 dada por y. Luego guarda el resultado en memoria.
+# Una función que multiplica (corriendo bits) x por una potencia de 2 dada por y. 
+# Luego guarda el resultado en memoria.
 
 .data
 	 x: .word 5
