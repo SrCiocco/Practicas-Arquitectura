@@ -18,7 +18,10 @@
 	error: .asciiz "Error: "
 	return: .asciiz "\n"
 	catName: .asciiz "\nIngrese el nombre de una categoria: "
-	selCat: .asciiz "\nSe ha seleccionado la categoria:"
+	selCat: .asciiz "\nSe ha seleccionado la categoria: "
+	lisCat: .asciiz "\nListado de categorias:\n"
+	selObj: .asciiz "\nSe ha seleccionado el objeto: "
+	lisObj: .asciiz "\nListado de objetos en la categoria actual:\n"
 	idObj: .asciiz "\nIngrese el ID del objeto a eliminar: "
 	objName: .asciiz "\nIngrese el nombre de un objeto: "
 	success: .asciiz "La operación se realizo con exito\n\n"
@@ -123,6 +126,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	j print_err
         	
         printmenu:
+        	
         	li $v0, 4 # print string.
         	la $a0, menu
         	syscall
@@ -135,14 +139,15 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
 	exit:
 		li $v0, 10
 		syscall
-
+		
 # a0: nombre del nodo a imprimir
+# a1: imprimir mensaje referente a categoria/objeto
 
 	print_node_name:
 		move $t0, $a0 # Guardo el argumento en $t0, pq syscall me pide a0 para cargar la string.
-	
+		
 		li $v0, 4 # print string.
-        	la $a0, selCat # La categoria seleccionada es: 
+        	la $a0, 0($a1) # Se ha seleccionado la categoria/Se ha seleccionado el objeto
         	syscall
         	
         	lw $a0, 8($t0) # Cargo el nombre.
@@ -203,6 +208,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	sw $t1, wclist # actualizo.
         	
         	move $a0, $t1
+        	la $a1, selCat
         	jal print_node_name
         	
         prevcategory_end:
@@ -221,14 +227,16 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	lw $s0, cclist # Cargamos la dirección de la lista de categorias.
         	beqz $s0, err_list_301 # ERROR: no hay categorias.
         	
+        	la $a1, lisCat # Preparo el mensaje de "Lista de categorias"
+        	
         	move $s1, $s0 # Apunto al primer elemento de la lista de categorias en $s1, para usarlo luego como indice.
         	
-        loop_list:
+        loop_listcategory:
         	move $a0, $s1
         	jal print_node_name
         	
         	lw $s1, 12($s1)
-        	bne $s1, $s0, loop_list
+        	bne $s1, $s0, loop_listcategory
         	
         listcategory_end:
         	lw $s1, 0($sp)
@@ -284,7 +292,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
 		beqz $t0, err_add_501 # ERROR: no hay categorias para añadir el objeto.
 		
 		la $a0, objName
-		jal getblock
+		jal getblock # $v0 = nombre del objeto.
 		
 		lw $t0, wclist
 		la $a0, 4($t0)
@@ -308,8 +316,91 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
 		jr $ra
 	
 	listobjects:
+		addi $sp, $sp, -16
+        	sw $ra, 12($sp)
+        	sw $s0, 8($sp)
+        	sw $s1, 4($sp)
+		sw $s2, 0($sp)
+		
+		lw $s0, wclist # Cargo la dirección de la categoria actual.
+		beqz $s0, err_list_601 # ERROR: no hay categorias.
+		
+		lw $s1, 4($s0) # Cargo la dirección del primer objeto.
+		beqz $s1, err_list_602 # ERROR: no hay objetos.
+		
+		la $a1, lisObj # Preparo el mensaje de "Lista de objetos de la categoria actual"
+		
+		move $s2, $s1 # Indice para recorrer los objetos de la categoria.
+	
+	loop_listobjects:
+		move $a0, $s2
+		jal print_node_name
+		
+		lw $s2, 12($s2)
+		
+		bne $s2, $s1, loop_listobjects
+
+	listobjects_end:
+		lw $s2, 0($sp)
+		lw $s1, 4($sp)
+        	lw $s0, 8($sp)
+        	lw $ra, 12($sp)
+        	addi $sp, $sp, 16
+        	
+        	li $v0, 0 # return 0.
+        	jr $ra
+        
+        err_list_601:
+        	lw $s2, 0($sp)
+		lw $s1, 4($sp)
+        	lw $s0, 8($sp)
+        	lw $ra, 12($sp)
+        	addi $sp, $sp, 16
+        	
+        	lw $v0, ERR_LIST_601
+        	jr $ra
+        	
+        err_list_602:
+        	lw $s2, 0($sp)
+		lw $s1, 4($sp)
+        	lw $s0, 8($sp)
+        	lw $ra, 12($sp)
+        	addi $sp, $sp, 16
+        	
+        	lw $v0, ERR_LIST_602
+        	jr $ra
 	
 	delobject:
+		addi $sp, $sp, -16
+		sw $ra, 12($sp)
+		sw $s0, 8($sp)
+		sw $s1, 4($sp)
+		sw $s2, 0($sp)
+		
+		lw $s0, wclist # Cargo la dirección de la categoria actual.
+		beqz $s0, err_del_701 # ERROR: no hay categorias.
+		
+		lw $s1, 8($s0)
+		beqz $s1, err_del_msg # ERROR: notFound.
+		
+		la $a0, idObj # Mensaje: Ingrese el nombre del objeto a eliminar.
+		jal getblock # Me devuelve en $v0 la dirección de memoria del ID a eliminar.
+		
+		move $a0, $v0
+		move $a1, $s1
+		jal strcmp		
+		
+	err_del_701:
+	
+	err_del_msg:
+	
+# a0: string1
+# a1: string2
+# v0: 0 si son iguales, de lo contrario son distintas.
+
+	strcmp:
+		
+		
 	
 # Funciones auxiliares de la catedra:
 
@@ -438,5 +529,5 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	jr $ra
 
 # newcategory[X],  nextcategory[X],  prevcategory[X], listcategories[X] y delcategory[X] para cumplir con los primeros 4 puntos. 
-# Para los objetos tendríamos newobject[], listobjects[] y delobject[]. 
+# Para los objetos tendríamos newobject[X], listobjects[X] y delobject[]. 
 # Las mismas no tienen argumento pero devolverán un entero positivo indicando el error o cero.
