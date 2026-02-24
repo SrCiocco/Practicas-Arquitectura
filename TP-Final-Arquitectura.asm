@@ -26,35 +26,38 @@
 	objName: .asciiz "\nIngrese el nombre de un objeto: "
 	success: .asciiz "La operación se realizo con exito\n\n"
 	item: .asciiz "\n> "
+	notFound: .asciiz "notFound"
+	
 # +++ Lista de errores +++.
 
 # Error al seleccionar una opción en el menu:
-ERR_SEL_101: .word 101 # Si el error fuera una selección inexistente del menú, se informará el error (101).
+	# Si el error fuera una selección inexistente del menú, se informará el error (101).
 
 # Errores al seleccionar una categoría:
-ERR_SEL_201: .word 201 # Si no hay categorías se informará el error (201).
-ERR_SEL_202: .word 202 # Si hay una sola categoría se informará el error (202).
+	# Si no hay categorías se informará el error (201).
+	# Si hay una sola categoría se informará el error (202).
 
 # Error al listar las categorías:
-ERR_LIST_301: .word 301 # Si no hay categorías se informará el error (301).
+	# Si no hay categorías se informará el error (301).
 
 # Error al borrar una categoría seleccionada:
-ERR_DEL_401: .word 401 # Si se invoca cuando no hay categorías debe informar el error (401).
+	# Si se invoca cuando no hay categorías debe informar el error (401).
 
 # Error al anexar un objeto a la categoría seleccionada en curso:
-ERR_ADD_501: .word 501 # Si se invoca cuando no hay categorías debe informar el error (501).
+	# Si se invoca cuando no hay categorías debe informar el error (501).
 
 # Errores al listar objetos de la categoría en curso:
-ERR_LIST_601: .word 601 # Si no hay categorías creadas se informará el error (601).
-ERR_LIST_602: .word 602 # Si no hay objetos para la categoría en curso se informará el error (602).
+	# Si no hay categorías creadas se informará el error (601).
+	# Si no hay objetos para la categoría en curso se informará el error (602).
 
 # Errores al borrar un objeto de la categoría seleccionada en curso usando el ID:
-ERR_DEL_701: .word 701 # Si no existen categorías el error (701).
-ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informará con un mensaje notFound.
+	# Si no existen categorías el error (701).
+	# Si el ID provisto no es encontrado se informará con un mensaje notFound.
 
 # --- Lista de errores ---.
 
 .text
+	.globl main
 	main:   
 		la $t0, schedv # initialization scheduler vector
 		
@@ -124,7 +127,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	j loop_main
         		
         err_sel_101:
-        	lw $v0, ERR_SEL_101
+        	li $v0, 101 # ERROR.
         	j print_err
         	
         printmenu:
@@ -198,7 +201,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	lw $s1, 8($sp)
         	addi $sp, $sp, 12
         	
-        	lw $v0, ERR_SEL_201
+        	li $v0, 201 # ERROR.
         	jr $ra
         	
         err_sel_202:
@@ -207,7 +210,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	lw $s1, 8($sp)
         	addi $sp, $sp, 12
         	
-        	lw $v0, ERR_SEL_202
+        	li $v0, 202 # ERROR.
         	jr $ra
 	
         prevcategory:
@@ -275,7 +278,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	lw $s1, 8($sp)
         	addi $sp, $sp, 12
 
-        	lw $v0, ERR_LIST_301
+        	li $v0, 301 # ERROR.
         	jr $ra
 
         delcategory:
@@ -310,7 +313,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	lw $s0, 4($sp)
         	addi $sp, $sp, 8
         	
-        	lw $v0 ERR_DEL_401
+        	li $v0, 401 # ERROR.
         	jr $ra
 
 	newobject:
@@ -348,7 +351,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
         	lw $s0, 4($sp)
         	addi $sp, $sp, 8
 		
-		lw $v0, ERR_ADD_501
+		li $v0, 501 # ERROR.
 		jr $ra
 	
 	listobjects:
@@ -396,7 +399,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
 		lw $s2, 12($sp)
         	addi $sp, $sp, 16
         	
-        	lw $v0, ERR_LIST_601
+        	li $v0, 601 # ERROR.
         	jr $ra
         	
         err_list_602:
@@ -406,7 +409,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
 		lw $s2, 12($sp)
         	addi $sp, $sp, 16
         	
-        	lw $v0, ERR_LIST_602
+        	li $v0, 602 # ERROR.
         	jr $ra
 	
 	delobject:
@@ -472,7 +475,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
 		lw $s3, 16($sp)
 		addi $sp, $sp, 20
 		
-		lw $v0, ERR_DEL_701
+		li $v0, 701 # ERROR.
 		jr $ra
 		
 	err_del_msg_alloc:
@@ -481,7 +484,7 @@ ERR_DEL_MSG: .asciiz "notFound" # Si el ID provisto no es encontrado se informar
 		
 	err_del_msg:
 		li $v0, 4 # print string.
-		la $a0, ERR_DEL_MSG
+		la $a0, notFound # ERROR.
 		syscall
 		
 		li $v0, 4 # print string.
